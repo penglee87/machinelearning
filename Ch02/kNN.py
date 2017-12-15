@@ -15,19 +15,21 @@ from numpy import *
 import operator
 from os import listdir
 
+#4个参数分别为 输入向量、训练集、标签集、最近邻的个数，返回输入向量所属标签
 def classify0(inX, dataSet, labels, k):
     dataSetSize = dataSet.shape[0]
-    diffMat = tile(inX, (dataSetSize,1)) - dataSet
+    diffMat = tile(inX, (dataSetSize,1)) - dataSet  #将输入向量纵向扩展至训练集大小,然后减训练集
     sqDiffMat = diffMat**2
-    sqDistances = sqDiffMat.sum(axis=1)
+    sqDistances = sqDiffMat.sum(axis=1)  #得到输入向量和每个训练样本的距离,axis=1表示按照横轴
     distances = sqDistances**0.5
-    sortedDistIndicies = distances.argsort()     
+    sortedDistIndicies = distances.argsort()  #距离排序
     classCount={}          
     for i in range(k):
         voteIlabel = labels[sortedDistIndicies[i]]
         classCount[voteIlabel] = classCount.get(voteIlabel,0) + 1
     #sortedClassCount = sorted(classCount.iteritems(), key=operator.itemgetter(1), reverse=True)  #py2
     sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
+    #print('sortedClassCount[0][0]',type(sortedClassCount[0][0]))
     return sortedClassCount[0][0]
 
 def createDataSet():
@@ -51,6 +53,7 @@ def file2matrix(filename):
         index += 1
     return returnMat,classLabelVector
     
+#数据规一化,返回规一化后的数据集，特征度量向量，每个特征最小值组成的向量
 def autoNorm(dataSet):
     minVals = dataSet.min(0)
     maxVals = dataSet.max(0)
@@ -61,8 +64,10 @@ def autoNorm(dataSet):
     normDataSet = normDataSet/tile(ranges, (m,1))   #element wise divide
     return normDataSet, ranges, minVals
    
+   
+#算法模型结果准确率测试
 def datingClassTest():
-    hoRatio = 0.50      #hold out 10%
+    hoRatio = 0.10      #hold out 10%
     datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')       #load data setfrom file
     normMat, ranges, minVals = autoNorm(datingDataMat)
     m = normMat.shape[0]
@@ -70,10 +75,23 @@ def datingClassTest():
     errorCount = 0.0
     for i in range(numTestVecs):
         classifierResult = classify0(normMat[i,:],normMat[numTestVecs:m,:],datingLabels[numTestVecs:m],3)
-        print("the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i]))
+        #print("the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i]))
         if (classifierResult != datingLabels[i]): errorCount += 1.0
     print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
     print(errorCount)
+    
+    
+#对任一输入样本进行分类
+def classifyPerson():
+    resultList = ['not at all','in small doses', 'in large doses']
+    percentTats = float(input("percentage of time spent playing video games?"))
+    ffMiles = float(input("frequent flier miles earned per year?"))
+    iceCream = float(input("liters of ice cream consumed per year?"))
+    datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+    inArr = array([ffMiles, percentTats, iceCream])
+    classifierResult = classify0((inArr-minVals)/ranges,normMat,datingLabels,3)
+    print ("You will probably like this person: ",resultList[classifierResult - 1])
     
 def img2vector(filename):
     returnVect = zeros((1,1024))
@@ -108,3 +126,59 @@ def handwritingClassTest():
         if (classifierResult != classNumStr): errorCount += 1.0
     print("\nthe total number of errors is: %d" % errorCount)
     print("\nthe total error rate is: %f" % (errorCount/float(mTest)))
+    
+    
+    
+    
+    
+    
+##############################################
+import matplotlib
+import matplotlib.pyplot as plt
+group,labels = createDataSet()
+#print('group',group)
+#print('labels',labels)
+re = classify0([0,0],group,labels,3)  #4个参数分别为 输入向量、训练集、标签集、最近邻的个数，返回输入向量所属标签
+print('re',re)
+
+
+datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
+#print(datingDataMat)
+#print(datingLabels)
+#print(datingDataMat.min(0))  #min() 返回所有值的最小值,min(0) 返回每列的最小值,min(1) 返回每行的最小值
+datingClassTest()
+fig = plt.figure()
+ax = fig.add_subplot(111)  
+#ax.scatter(datingDataMat[:,1], datingDataMat[:,2])
+#ax.scatter(datingDataMat[:,0], datingDataMat[:,1],15.0*array(datingLabels), 15.0*array(datingLabels))  #作散点图，参数分别为x轴值、y轴值、散点大小和散点颜色
+ax.scatter(datingDataMat[:,0], datingDataMat[:,1],s=15.0*array(datingLabels), c=15.0*array(datingLabels))  #作散点图，参数分别为x轴值、y轴值、散点大小和散点颜色
+#plt.show()
+
+classifyPerson() #10,10000,0.5
+
+
+
+print('---------------------------------')
+
+#有监督分类
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.datasets import load_iris  
+  
+#查看iris数据集  
+iris = load_iris()  
+#print('iris',iris)
+knn = KNeighborsClassifier().fit(iris.data, iris.target)
+predict = knn.predict([[0.1,0.2,0.3,0.4]])
+print ('predict',predict)
+print (iris.target_names)
+
+
+
+print('---------------------------------')
+knn = KNeighborsClassifier().fit(datingDataMat,datingLabels)
+result_set = [(knn.fit(features[train], labels[train]).predict(features[test]), test) for train, test in kf]  
+predict = knn.predict([[10,10000,0.5]])
+resultList = ['not at all','in small doses', 'in large doses']
+print ('predict',resultList[int(predict)-1])
+
+
