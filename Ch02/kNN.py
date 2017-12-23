@@ -65,7 +65,7 @@ def autoNorm(dataSet):
     return normDataSet, ranges, minVals
    
    
-#算法模型结果准确率测试
+#按测试、训练(1/9)比例评估算法模型结果准确率
 def datingClassTest():
     hoRatio = 0.10      #hold out 10%
     datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')       #load data setfrom file
@@ -80,6 +80,21 @@ def datingClassTest():
     print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
     print(errorCount)
     
+
+#将训练集作为测试集评估算法模型结果准确率
+def datingClassTest2():
+    datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')       #load data setfrom file
+    normMat, ranges, minVals = autoNorm(datingDataMat)
+    m = normMat.shape[0]
+    numTestVecs = int(m)
+    errorCount = 0.0
+    for i in range(numTestVecs):
+        classifierResult = classify0(normMat[i],normMat,datingLabels,5)
+        #print("the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i]))
+        if (classifierResult != datingLabels[i]): errorCount += 1.0
+    print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
+    print(errorCount)
+
     
 #对任一输入样本进行分类
 def classifyPerson():
@@ -147,6 +162,7 @@ datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
 #print(datingLabels)
 #print(datingDataMat.min(0))  #min() 返回所有值的最小值,min(0) 返回每列的最小值,min(1) 返回每行的最小值
 datingClassTest()
+datingClassTest2()
 fig = plt.figure()
 ax = fig.add_subplot(111)  
 #ax.scatter(datingDataMat[:,1], datingDataMat[:,2])
@@ -154,7 +170,7 @@ ax = fig.add_subplot(111)
 ax.scatter(datingDataMat[:,0], datingDataMat[:,1],s=15.0*array(datingLabels), c=15.0*array(datingLabels))  #作散点图，参数分别为x轴值、y轴值、散点大小和散点颜色
 #plt.show()
 
-classifyPerson() #10,10000,0.5
+#classifyPerson() #10,10000,0.5
 
 
 
@@ -162,23 +178,24 @@ print('---------------------------------')
 
 #有监督分类
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.datasets import load_iris  
-  
-#查看iris数据集  
-iris = load_iris()  
-#print('iris',iris)
-knn = KNeighborsClassifier().fit(iris.data, iris.target)
-predict = knn.predict([[0.1,0.2,0.3,0.4]])
-print ('predict',predict)
-print (iris.target_names)
+from sklearn.datasets import load_iris
 
+
+datingDataMat,datingLabels = file2matrix('datingTestSet2.txt')
+normMat, ranges, minVals = autoNorm(datingDataMat)
+knn = KNeighborsClassifier().fit(normMat,datingLabels)
+score = knn.score(normMat,datingLabels)
+print('score',score)
 
 
 print('---------------------------------')
-knn = KNeighborsClassifier().fit(datingDataMat,datingLabels)
-result_set = [(knn.fit(features[train], labels[train]).predict(features[test]), test) for train, test in kf]  
-predict = knn.predict([[10,10000,0.5]])
-resultList = ['not at all','in small doses', 'in large doses']
-print ('predict',resultList[int(predict)-1])
-
-
+#查看iris数据集  
+iris = load_iris()  
+#print('iris',iris)
+#print('iris',iris.data, iris.target,iris.target_names,iris.DESCR,iris.feature_names)
+knn = KNeighborsClassifier().fit(iris.data, iris.target)
+score = knn.score(iris.data, iris.target)
+print('score',score)
+predict = knn.predict([[0.1,0.2,0.3,0.4]])  
+print ('predict',predict)
+print(iris.target_names[predict])
