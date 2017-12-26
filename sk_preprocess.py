@@ -5,8 +5,9 @@
 >>> X_train = np.array([[ 1., -1.,  2.],
 ...                     [ 2.,  0.,  0.],
 ...                     [ 0.,  1., -1.]])
->>> X_scaled = preprocessing.scale(X_train)
 
+# preprocessing.scale  将原数据集转化为均值为0,标准差为1的数据集
+>>> X_scaled = preprocessing.scale(X_train)
 >>> X_scaled                                          
 array([[ 0.  ..., -1.22...,  1.33...],
        [ 1.22...,  0.  ..., -0.26...],
@@ -18,7 +19,7 @@ array([ 0.,  0.,  0.])
 >>> X_scaled.std(axis=0)
 array([ 1.,  1.,  1.])
 
-
+# preprocessing.StandardScaler() 建立标准化数据集的模型
 >>> scaler = preprocessing.StandardScaler().fit(X_train)
 >>> scaler
 StandardScaler(copy=True, with_mean=True, with_std=True)
@@ -28,7 +29,7 @@ array([ 1. ...,  0. ...,  0.33...])
 
 >>> scaler.scale_                                       
 array([ 0.81...,  0.81...,  1.24...])
-
+# 将模型应用到数据集上
 >>> scaler.transform(X_train)                           
 array([[ 0.  ..., -1.22...,  1.33...],
        [ 1.22...,  0.  ..., -0.26...],
@@ -44,7 +45,8 @@ array([[-2.44...,  1.22..., -0.26...]])
 >>> X_train = np.array([[ 1., -1.,  2.],
 ...                     [ 2.,  0.,  0.],
 ...                     [ 0.,  1., -1.]])
-...
+
+# preprocessing.MinMaxScaler() 将特征缩放至[0,1]之间
 >>> min_max_scaler = preprocessing.MinMaxScaler()
 >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
 >>> X_train_minmax

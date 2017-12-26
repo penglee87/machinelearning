@@ -6,8 +6,10 @@ from sklearn.datasets import load_iris
 from sklearn import tree
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction import DictVectorizer
 from numpy import *
 
+'''
 iris = load_iris()
 X=iris.data
 y=iris.target
@@ -41,11 +43,14 @@ graph.render("iris")  #保存图源码并根据源码生成pdf文件存储图(�
 #group = array([[1.0,1.1],[1.0,1.0],[0,0],[0,0.1]])
 group = array([['a',1.1],['a',1.0],['b',0],['b',0.1]])
 labels = ['A','A','B','B']
+vec = DictVectorizer()
+vec.fit_transform(group[0]).toarray()
+print('get_feature_names',vec.get_feature_names())
 clf = tree.DecisionTreeClassifier(criterion = 'entropy')
-clf = clf.fit(group, labels)
-print(clf.score(group,labels))
+clf = clf.fit(vec, labels)
+print(clf.score(vec,labels))
 
-
+'''
 fr = open('lenses.txt')
 lenses = [inst.strip().split('\t') for inst in fr.readlines()]
 lensesLabels=['age','prescript','astigmatic','tearRate']
@@ -54,19 +59,6 @@ lensesTree = tree.DecisionTreeClassifier().fit(lenses[:][0:4],lenses[:][-1])
 dot_data = tree.export_graphviz(lensesTree, out_file=None)
 graph = graphviz.Source(dot_data)
 graph.render("lenses")
-
-
-with open("iris.dot", 'w') as f:
-    f = tree.export_graphviz(clf, out_file=f)
-os.unlink('iris.dot')
-
-
-
-dot_data = StringIO() 
-tree.export_graphviz(clf, out_file=dot_data) 
-graph = pydot.graph_from_dot_data(dot_data.getvalue()) 
-print('graph',type(graph),graph)
-graph[0].write_pdf("iris.pdf") 
 
 
 '''
