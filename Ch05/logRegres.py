@@ -3,6 +3,7 @@ Created on Oct 27, 2010
 Logistic Regression Working Module
 @author: Peter
 '''
+import matplotlib.pyplot as plt
 from numpy import *
 
 def loadDataSet():
@@ -17,7 +18,8 @@ def loadDataSet():
 def sigmoid(inX):
     return 1.0/(1+exp(-inX))
 
-#返回回归系数,具体数学推导可见  https://www.cnblogs.com/pinard/p/5970503.html
+#梯度下降法返回回归系数,循环500次,每次循环均将所有样本作为输入
+#具体数学推导可见  https://www.cnblogs.com/pinard/p/5970503.html
 #输入参数分别为二维数组(样本)和一维数据(分类标签)
 def gradAscent(dataMatIn, classLabels):
     dataMatrix = mat(dataMatIn)             #convert to NumPy matrix
@@ -30,13 +32,39 @@ def gradAscent(dataMatIn, classLabels):
         h = sigmoid(dataMatrix*weights)     #matrix mult  [m*1] 返回每行的数据与回归系数相乘的和,然后计算sigmoid
         error = (labelMat - h)              #vector subtraction  [m*1]
         weights = weights + alpha * dataMatrix.transpose()* error  #matrix mult  [n*m]*[m*1]=[n*1]
-        #weights = weights - alpha * dataMatrix.transpose()* (h -labelMat)  #迭代更新系数
+        #weights = weights - alpha * dataMatrix.transpose()* (h -labelMat)  #梯度下降法迭代更新系数
         #print(weights.transpose())  #查看系数变化情况
+    return weights
+
+
+#随机梯度下降法,每次输入一个样本,迭代完终止
+def stocGradAscent0(dataMatrix, classLabels):
+    m,n = shape(dataMatrix)
+    alpha = 0.01
+    weights = ones(n)   #initialize to all ones
+    for i in range(m):
+        h = sigmoid(sum(dataMatrix[i]*weights))
+        error = classLabels[i] - h
+        weights = weights + alpha * error * dataMatrix[i]
+    return weights
+
+#改进的随机梯度下降法
+def stocGradAscent1(dataMatrix, classLabels, numIter=150):
+    m,n = shape(dataMatrix)
+    weights = ones(n)   #initialize to all ones
+    for j in range(numIter):
+        dataIndex = range(m)
+        for i in range(m):
+            alpha = 4/(1.0+j+i)+0.0001    #apha decreases with iteration, does not 
+            randIndex = int(random.uniform(0,len(dataIndex)))#go to 0 because of the constant
+            h = sigmoid(sum(dataMatrix[randIndex]*weights))
+            error = classLabels[randIndex] - h
+            weights = weights + alpha * error * dataMatrix[randIndex]
+            del(list(dataIndex)[randIndex])
     return weights
 
 #画出数据集和逻辑回归的最佳拟合函数
 def plotBestFit(weights):
-    import matplotlib.pyplot as plt
     dataMat,labelMat=loadDataSet()
     dataArr = array(dataMat)
     n = shape(dataArr)[0] 
@@ -55,32 +83,9 @@ def plotBestFit(weights):
     y = (-weights[0]-weights[1]*x)/weights[2]
     ax.plot(x, y)
     plt.xlabel('X1'); plt.ylabel('X2');
-    plt.show()
+    #plt.show()
 
-def stocGradAscent0(dataMatrix, classLabels):
-    m,n = shape(dataMatrix)
-    alpha = 0.01
-    weights = ones(n)   #initialize to all ones
-    for i in range(m):
-        h = sigmoid(sum(dataMatrix[i]*weights))
-        error = classLabels[i] - h
-        weights = weights + alpha * error * dataMatrix[i]
-    return weights
-
-def stocGradAscent1(dataMatrix, classLabels, numIter=150):
-    m,n = shape(dataMatrix)
-    weights = ones(n)   #initialize to all ones
-    for j in range(numIter):
-        dataIndex = range(m)
-        for i in range(m):
-            alpha = 4/(1.0+j+i)+0.0001    #apha decreases with iteration, does not 
-            randIndex = int(random.uniform(0,len(dataIndex)))#go to 0 because of the constant
-            h = sigmoid(sum(dataMatrix[randIndex]*weights))
-            error = classLabels[randIndex] - h
-            weights = weights + alpha * error * dataMatrix[randIndex]
-            del(dataIndex[randIndex])
-    return weights
-
+#逻辑回归分类函数
 def classifyVector(inX, weights):
     prob = sigmoid(sum(inX*weights))
     if prob > 0.5: return 1.0
@@ -125,10 +130,17 @@ if __name__ == "__main__":
     print('weights.getA()',weights.getA(),'type(weights.getA())',type(weights.getA()))
     plotBestFit(weights.getA())
     
+    weights2=stocGradAscent0(array(dataArr),labelMat)
+    print('weights2',weights2,'type(weights2)',type(weights2))
+    plotBestFit(weights2)
     
+    weights3=stocGradAscent1(array(dataArr),labelMat)
+    print('weights3',weights3,'type(weights3)',type(weights3))
+    plotBestFit(weights3)
     
+    multiTest()
     
-    
+    plt.show()
     
     
     
