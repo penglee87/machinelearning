@@ -28,6 +28,18 @@ def clipAlpha(aj,H,L):
         aj = L
     return aj
 
+
+'''
+创建一个alpha向量并初始化为0向量
+当迭代次数小于最大迭代次数时（外循环）
+    对数据集中的每个数据向量（内循环）
+        如果该数据向量可以被优化：
+            随机选择别个一个数据向量
+            同时优化这两个向量
+            如果两个向量都不能被优化，退出内循环
+    如果所有向量都没有被优化，增加迭代数目，继续下一次循环
+'''
+#简化版的smo算法
 def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
     dataMatrix = mat(dataMatIn); labelMat = mat(classLabels).transpose()
     b = 0; m,n = shape(dataMatrix)
@@ -38,25 +50,28 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
         for i in range(m):
             fXi = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[i,:].T)) + b
             Ei = fXi - float(labelMat[i])#if checks if an example violates KKT conditions
+            #如果alpha向量可更改进入优化流程
             if ((labelMat[i]*Ei < -toler) and (alphas[i] < C)) or ((labelMat[i]*Ei > toler) and (alphas[i] > 0)):
-                j = selectJrand(i,m)
+                j = selectJrand(i,m)  #随机选择第二个alpha
                 fXj = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[j,:].T)) + b
                 Ej = fXj - float(labelMat[j])
                 alphaIold = alphas[i].copy(); alphaJold = alphas[j].copy();
+                #确保alpha在0与C之间
                 if (labelMat[i] != labelMat[j]):
                     L = max(0, alphas[j] - alphas[i])
                     H = min(C, C + alphas[j] - alphas[i])
                 else:
                     L = max(0, alphas[j] + alphas[i] - C)
                     H = min(C, alphas[j] + alphas[i])
-                if L==H: print("L==H"; continue)
+                if L==H: print("L==H"); continue
                 eta = 2.0 * dataMatrix[i,:]*dataMatrix[j,:].T - dataMatrix[i,:]*dataMatrix[i,:].T - dataMatrix[j,:]*dataMatrix[j,:].T
-                if eta >= 0: print("eta>=0"; continue)
+                if eta >= 0: print("eta>=0"); continue
                 alphas[j] -= labelMat[j]*(Ei - Ej)/eta
                 alphas[j] = clipAlpha(alphas[j],H,L)
-                if (abs(alphas[j] - alphaJold) < 0.00001): print("j not moving enough"; continue)
-                alphas[i] += labelMat[j]*labelMat[i]*(alphaJold - alphas[j])#update i by the same amount as j
-                                                                        #the update is in the oppostie direction
+                if (abs(alphas[j] - alphaJold) < 0.00001): print("j not moving enough"); continue
+                #对i进行修改，修改量与j相同，但方向相反
+                alphas[i] += labelMat[j]*labelMat[i]*(alphaJold - alphas[j])
+                #设置常数项
                 b1 = b - Ei- labelMat[i]*(alphas[i]-alphaIold)*dataMatrix[i,:]*dataMatrix[i,:].T - labelMat[j]*(alphas[j]-alphaJold)*dataMatrix[i,:]*dataMatrix[j,:].T
                 b2 = b - Ej- labelMat[i]*(alphas[i]-alphaIold)*dataMatrix[i,:]*dataMatrix[j,:].T - labelMat[j]*(alphas[j]-alphaJold)*dataMatrix[j,:]*dataMatrix[j,:].T
                 if (0 < alphas[i]) and (C > alphas[i]): b = b1
@@ -133,13 +148,13 @@ def innerL(i, oS):
         else:
             L = max(0, oS.alphas[j] + oS.alphas[i] - oS.C)
             H = min(oS.C, oS.alphas[j] + oS.alphas[i])
-        if L==H: print("L==H"; return 0)
+        if L==H: print("L==H"); return 0
         eta = 2.0 * oS.K[i,j] - oS.K[i,i] - oS.K[j,j] #changed for kernel
-        if eta >= 0: print("eta>=0"; return 0)
+        if eta >= 0: print("eta>=0"); return 0
         oS.alphas[j] -= oS.labelMat[j]*(Ei - Ej)/eta
         oS.alphas[j] = clipAlpha(oS.alphas[j],H,L)
         updateEk(oS, j) #added this for the Ecache
-        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print("j not moving enough"; return 0)
+        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print("j not moving enough"); return 0
         oS.alphas[i] += oS.labelMat[j]*oS.labelMat[i]*(alphaJold - oS.alphas[j])#update i by the same amount as j
         updateEk(oS, i) #added this for the Ecache                    #the update is in the oppostie direction
         b1 = oS.b - Ei- oS.labelMat[i]*(oS.alphas[i]-alphaIold)*oS.K[i,i] - oS.labelMat[j]*(oS.alphas[j]-alphaJold)*oS.K[i,j]
@@ -258,7 +273,7 @@ def testDigits(kTup=('rbf', 10)):
 '''#######********************************
 Non-Kernel VErsions below
 '''#######********************************
-
+#完整版platt smo的支持函数
 class optStructK:
     def __init__(self,dataMatIn, classLabels, C, toler):  # Initialize the structure with the parameters 
         self.X = dataMatIn
@@ -307,13 +322,13 @@ def innerLK(i, oS):
         else:
             L = max(0, oS.alphas[j] + oS.alphas[i] - oS.C)
             H = min(oS.C, oS.alphas[j] + oS.alphas[i])
-        if L==H: print("L==H"; return 0)
+        if L==H: print("L==H"); return 0
         eta = 2.0 * oS.X[i,:]*oS.X[j,:].T - oS.X[i,:]*oS.X[i,:].T - oS.X[j,:]*oS.X[j,:].T
-        if eta >= 0: print("eta>=0"; return 0)
+        if eta >= 0: print("eta>=0"); return 0
         oS.alphas[j] -= oS.labelMat[j]*(Ei - Ej)/eta
         oS.alphas[j] = clipAlpha(oS.alphas[j],H,L)
         updateEk(oS, j) #added this for the Ecache
-        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print("j not moving enough"; return 0)
+        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print("j not moving enough"); return 0
         oS.alphas[i] += oS.labelMat[j]*oS.labelMat[i]*(alphaJold - oS.alphas[j])#update i by the same amount as j
         updateEk(oS, i) #added this for the Ecache                    #the update is in the oppostie direction
         b1 = oS.b - Ei- oS.labelMat[i]*(oS.alphas[i]-alphaIold)*oS.X[i,:]*oS.X[i,:].T - oS.labelMat[j]*(oS.alphas[j]-alphaJold)*oS.X[i,:]*oS.X[j,:].T
@@ -345,3 +360,17 @@ def smoPK(dataMatIn, classLabels, C, toler, maxIter):    #full Platt SMO
         elif (alphaPairsChanged == 0): entireSet = True  
         print("iteration number: %d" % iter)
     return oS.b,oS.alphas
+    
+    
+    
+##############################################
+#dataArr,labelArr = loadDataSet('testSet.txt')
+#print('labelArr',labelArr)
+#b,alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
+#print('b',b)
+#print('alphas',alphas[alphas>0])
+
+
+print('--------------------------------------')
+dataArr,labelArr = loadDataSet('testSet.txt')
+b,alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
