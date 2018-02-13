@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 
+#在虹膜数据集中绘制不同的SVM分类器
 
 def make_meshgrid(x, y, h=.02):
     """Create a mesh of points to plot in
