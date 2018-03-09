@@ -40,7 +40,8 @@ It is worth noting that RandomForests and ExtraTrees can be fitted in parallel
 on many cores as each tree is built independently of the others. AdaBoost's
 samples are built sequentially and so do not use multiple cores.
 """
-print(__doc__)
+# print(__doc__)
+# 绘制虹膜数据集上树木合奏的决策表面
 
 import numpy as np
 import matplotlib.pyplot as plt
