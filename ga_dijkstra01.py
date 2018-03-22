@@ -50,4 +50,4 @@ if __name__ == '__main__':
                    [3, 4, 7, 3, 1, 0]]
 
     distance,path= dijkstra(graph_list, 0)  # 查找从源点0开始带其他节点的最短路径
-    print(distance,path)
+    print('distance',distance,'path',path)
