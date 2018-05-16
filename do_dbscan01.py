@@ -108,7 +108,7 @@ def plotFeature(data, clusters, clusterNum):
         ax.scatter(subCluster[0, :].flatten().A[0], subCluster[1, :].flatten().A[0], c=colorSytle, s=50)
 
 def main():
-    dataSet = loadDataSet('dbscan.txt', splitChar=',')
+    dataSet = loadDataSet('dbscan01.txt', splitChar=',')
     dataSet = np.mat(dataSet).transpose()
     # print(dataSet)
     clusters, clusterNum = dbscan(dataSet, 2, 15)
